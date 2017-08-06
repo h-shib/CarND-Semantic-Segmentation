@@ -48,14 +48,25 @@ tests.test_load_vgg(load_vgg, tf)
 def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
     Create the layers for a fully convolutional network.  Build skip-layers using the vgg layers.
-    :param vgg_layer7_out: TF Tensor for VGG Layer 3 output
+    :param vgg_layer3_out: TF Tensor for VGG Layer 3 output
     :param vgg_layer4_out: TF Tensor for VGG Layer 4 output
-    :param vgg_layer3_out: TF Tensor for VGG Layer 7 output
+    :param vgg_layer7_out: TF Tensor for VGG Layer 7 output
     :param num_classes: Number of classes to classify
     :return: The Tensor for the last layer of output
     """
     # TODO: Implement function
-    return None
+    conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, 1)
+    trans_layer_1 = tf.layers.conv2d_transpose(conv_1x1, num_classes, 4, 2)
+
+    skip_layer_1 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, 1)
+    skip_layer_1 = tf.add(trans_layer_1, skip_layer_1)
+    trans_layer_2 = tf.layers.conv2d_transpose(skip_layer_1, num_classes, 4, 2)
+
+    skip_layer_2 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, 1)
+    skip_layer_2 = tf.add(trans_layer_2, skip_layer_2)
+    trans_layer_3 = tf.layers.conv2d_transpose(skip_layer_2, num_classes, 16, 8 )
+
+    return trans_layer_3
 tests.test_layers(layers)
 
 
@@ -117,6 +128,9 @@ def run():
         #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
 
         # TODO: Build NN using load_vgg, layers, and optimize function
+        image_input, keep_prob, layer3_out, layer4_out, layer7_out = load_vgg(sess, vgg_path)
+        last_layer = layers(layer3_out, layer4_out, layer7_out, num_classes)
+        
 
         # TODO: Train NN using the train_nn function
 
