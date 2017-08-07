@@ -107,7 +107,14 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param learning_rate: TF Placeholder for learning rate
     """
     # TODO: Implement function
-    pass
+    for epoch in epochs:
+        for images, labels in get_batches_fn(batch_size):
+            _, loss = sess.run([train_op, cross_entropy_loss],
+                                feed_dict={input_image: images,
+                                           correct_label: labels,
+                                           keep_prob: keep_prob,
+                                           learning_rate: learning_rate})
+        print("Epoch: {}/{}, Training loss: {:.4f}...".format(epoch, epochs, loss))
 tests.test_train_nn(train_nn)
 
 
@@ -117,6 +124,8 @@ def run():
     data_dir = './data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
+    epochs = 3
+    batch_size = 10
 
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
@@ -145,7 +154,7 @@ def run():
 
         # TODO: Train NN using the train_nn function
         sess.run(tf.global_variables_initializer())
-        
+        train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, image_input, correct_label, keep_prob, learning_rate)
 
         # TODO: Save inference data using helper.save_inference_samples
         #  helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
