@@ -56,15 +56,15 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
     # TODO: Implement function
     conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, 1)
-    trans_layer_1 = tf.layers.conv2d_transpose(conv_1x1, num_classes, 4, 2)
+    trans_layer_1 = tf.layers.conv2d_transpose(conv_1x1, num_classes, 4, 2, 'SAME')
 
-    skip_layer_1 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, 1)
+    skip_layer_1 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, 1)
     skip_layer_1 = tf.add(trans_layer_1, skip_layer_1)
-    trans_layer_2 = tf.layers.conv2d_transpose(skip_layer_1, num_classes, 4, 2)
+    trans_layer_2 = tf.layers.conv2d_transpose(skip_layer_1, num_classes, 4, 2, 'SAME')
 
-    skip_layer_2 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, 1)
+    skip_layer_2 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, 1)
     skip_layer_2 = tf.add(trans_layer_2, skip_layer_2)
-    trans_layer_3 = tf.layers.conv2d_transpose(skip_layer_2, num_classes, 16, 8 )
+    trans_layer_3 = tf.layers.conv2d_transpose(skip_layer_2, num_classes, 16, 8, 'SAME')
 
     return trans_layer_3
 tests.test_layers(layers)
@@ -107,14 +107,15 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param learning_rate: TF Placeholder for learning rate
     """
     # TODO: Implement function
-    for epoch in epochs:
+    print("Start Training...")
+    for epoch in range(epochs):
         for images, labels in get_batches_fn(batch_size):
             _, loss = sess.run([train_op, cross_entropy_loss],
                                 feed_dict={input_image: images,
                                            correct_label: labels,
-                                           keep_prob: keep_prob,
-                                           learning_rate: learning_rate})
-        print("Epoch: {}/{}, Training loss: {:.4f}...".format(epoch, epochs, loss))
+                                           keep_prob: 0.75,
+                                           learning_rate: 0.0001})
+        print("Epoch: {}/{}, Training loss: {:.4f}...".format(epoch+1, epochs, loss))
 tests.test_train_nn(train_nn)
 
 
@@ -124,7 +125,7 @@ def run():
     data_dir = './data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
-    epochs = 3
+    epochs = 1
     batch_size = 10
 
     # Download pretrained vgg model
@@ -158,6 +159,11 @@ def run():
 
         # TODO: Save inference data using helper.save_inference_samples
         #  helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
+        saver = tf.train.Saver()
+        saver.save(sess, './checkpoints/model1.ckpt')
+        saver.export_meta_graph('./checkpoints/model1.meta')
+        tf.train.write_graph(sess.graph_def, './checkpoints/', 'model1.pb', False)
+        helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, image_input)
 
         # OPTIONAL: Apply the trained model to a video
 
