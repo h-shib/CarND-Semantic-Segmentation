@@ -108,14 +108,20 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     """
     # TODO: Implement function
     print("Start Training...")
+    lr = 0.0005
     for epoch in range(epochs):
         for images, labels in get_batches_fn(batch_size):
-            _, loss = sess.run([train_op, cross_entropy_loss],
-                                feed_dict={input_image: images,
-                                           correct_label: labels,
-                                           keep_prob: 0.75,
-                                           learning_rate: 0.0001})
-        print("Epoch: {}/{}, Training loss: {:.4f}...".format(epoch+1, epochs, loss))
+            sess.run([train_op],
+                      feed_dict={input_image: images,
+                                 correct_label: labels,
+                                 keep_prob: 0.75,
+                                 learning_rate: lr})
+            loss = sess.run([cross_entropy_loss],
+                             feed_dict={input_image: images,
+                                        correct_label: labels,
+                                        keep_prob: 1})
+        lr *= 0.95
+        print("Epoch: {}/{}, Training loss: {}...".format(epoch+1, epochs, loss))
 tests.test_train_nn(train_nn)
 
 
@@ -125,8 +131,8 @@ def run():
     data_dir = './data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
-    epochs = 1
-    batch_size = 10
+    epochs = 30
+    batch_size = 14
 
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
@@ -160,9 +166,9 @@ def run():
         # TODO: Save inference data using helper.save_inference_samples
         #  helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
         saver = tf.train.Saver()
-        saver.save(sess, './checkpoints/model1.ckpt')
-        saver.export_meta_graph('./checkpoints/model1.meta')
-        tf.train.write_graph(sess.graph_def, './checkpoints/', 'model1.pb', False)
+        saver.save(sess, './checkpoints/model_1.ckpt')
+        saver.export_meta_graph('./checkpoints/model_1.meta')
+        tf.train.write_graph(sess.graph_def, './checkpoints/', 'model_1.pb', False)
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, image_input)
 
         # OPTIONAL: Apply the trained model to a video
