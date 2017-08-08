@@ -55,18 +55,21 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
     # TODO: Implement function
-    conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, 1)
-    trans_layer_1 = tf.layers.conv2d_transpose(conv_1x1, num_classes, 4, 2, 'SAME')
 
-    skip_layer_1 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, 1)
-    skip_layer_1 = tf.add(trans_layer_1, skip_layer_1)
-    trans_layer_2 = tf.layers.conv2d_transpose(skip_layer_1, num_classes, 4, 2, 'SAME')
+    kernel_init = tf.truncated_normal_initializer(stddev=0.01)
 
-    skip_layer_2 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, 1)
-    skip_layer_2 = tf.add(trans_layer_2, skip_layer_2)
-    trans_layer_3 = tf.layers.conv2d_transpose(skip_layer_2, num_classes, 16, 8, 'SAME')
+    output_encoded = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, 1, kernel_initializer=kernel_init)
+    output_deconv = tf.layers.conv2d_transpose(output_encoded, num_classes, 4, 2, 'SAME', kernel_initializer=kernel_init)
 
-    return trans_layer_3
+    layer4_encoded = tf.layers.conv2d(output_deconv, num_classes, 1, 1, kernel_initializer=kernel_init)
+    layer4_skip = tf.add(output_deconv, layer4_encoded)
+    layer4_deconv = tf.layers.conv2d_transpose(layer4_skip, num_classes, 4, 2, 'SAME', kernel_initializer=kernel_init)
+
+    layer3_encoded = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, 1, kernel_initializer=kernel_init)
+    layer3_skip = tf.add(layer4_deconv, layer3_encoded)
+    layer3_deconv = tf.layers.conv2d_transpose(layer3_skip, num_classes, 16, 8, 'SAME', kernel_initializer=kernel_init)
+
+    return layer3_deconv
 tests.test_layers(layers)
 
 
@@ -131,7 +134,7 @@ def run():
     data_dir = './data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
-    epochs = 30
+    epochs = 15
     batch_size = 14
 
     # Download pretrained vgg model
