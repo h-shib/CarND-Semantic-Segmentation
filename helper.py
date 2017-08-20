@@ -8,6 +8,7 @@ import zipfile
 import time
 import tensorflow as tf
 from glob import glob
+from skimage.transform import warp, AffineTransform
 from urllib.request import urlretrieve
 from tqdm import tqdm
 
@@ -91,8 +92,11 @@ def gen_batch_function(data_folder, image_shape):
                 gt_bg = gt_bg.reshape(*gt_bg.shape, 1)
                 gt_image = np.concatenate((gt_bg, np.invert(gt_bg)), axis=2)
 
-                images.append(image)
-                gt_images.append(gt_image)
+                # get list of original image and augmented images
+                aug_images, aug_gt_images = augment_image(image, gt_image)
+
+                images.extend(aug_images)
+                gt_images.extend(aug_gt_images)
 
             yield np.array(images), np.array(gt_images)
     return get_batches_fn
@@ -138,3 +142,26 @@ def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_p
         sess, logits, keep_prob, input_image, os.path.join(data_dir, 'data_road/testing'), image_shape)
     for name, image in image_outputs:
         scipy.misc.imsave(os.path.join(output_dir, name), image)
+
+
+def augment_image(image_orig, gt_image_orig):
+    """
+    Image augmentation
+
+    Arguments:
+    image_orig -- original image to be augmented
+
+    Returns:
+    aug_images -- python list containing original image and augmented images
+    """
+
+    aug_images = [image_orig]
+    aug_gt_images = [gt_image_orig]
+    
+    # flip image around y-axis
+    flip_image = np.fliplr(image_orig)
+    flip_gt_image = np.fliplr(gt_image_orig)
+    aug_images.append(flip_image)
+    aug_gt_images.append(flip_gt_image)
+
+    return aug_images, aug_gt_images
