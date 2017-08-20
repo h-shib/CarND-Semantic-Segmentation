@@ -124,7 +124,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
                                         correct_label: labels,
                                         keep_prob: 1})
         lr *= 0.95
-        print("Epoch: {}/{}, Training loss: {}...".format(epoch+1, epochs, loss))
+        print("Epoch: {}/{}, Training loss: {}...".format(epoch+1, epochs, loss[0]))
 tests.test_train_nn(train_nn)
 
 
@@ -134,8 +134,8 @@ def run():
     data_dir = './data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
-    epochs = 15
-    batch_size = 14
+    epochs = 30
+    batch_size = 10
 
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
@@ -169,9 +169,9 @@ def run():
         # TODO: Save inference data using helper.save_inference_samples
         #  helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
         saver = tf.train.Saver()
-        saver.save(sess, './checkpoints/model_1.ckpt')
-        saver.export_meta_graph('./checkpoints/model_1.meta')
-        tf.train.write_graph(sess.graph_def, './checkpoints/', 'model_1.pb', False)
+        saver.save(sess, './checkpoints/model.ckpt')
+        saver.export_meta_graph('./checkpoints/model.meta')
+        tf.train.write_graph(sess.graph_def, './checkpoints/', 'model.pb', False)
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, image_input)
 
         # OPTIONAL: Apply the trained model to a video
